@@ -14,7 +14,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Vahid Zehtab",
     author_email="vahid@zehtab.me",
-    url="https://github.com/vahidzee/lightning_utils",
+    url="https://github.com/vahidzee/lightning_toolbox",
     keywords=["artificial intelligence", "pytorch lightning", "objective functions", "regularization"],
     install_requires=["torch>=1.9", "lightning", "dycode==0.0.2"],
     classifiers=[
