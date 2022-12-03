@@ -5,8 +5,8 @@ with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name="lightning_utils",
-    packages=find_packages(include=["lighning_utils"]),  # add other exclusions in future
+    name="lightning_toolbox",
+    packages=find_packages(include=["lightning_toolbox"]),  # add other exclusions in future
     version="0.0.1",
     license="MIT",
     description="A collection of utilities for PyTorch Lightning.",

@@ -1,4 +1,4 @@
-# Lightning Utils: A set of useful utilities for the PyTorch Lightning Framework
+# Lightning Toolbox: A set of useful tools for the PyTorch Lightning Framework
 
 ## Installation
 
