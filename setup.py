@@ -1,5 +1,5 @@
 from setuptools import setup, find_packages
-from lightning_utils import __version__
+
 
 with open("README.md", encoding="utf-8") as f:
     long_description = f.read()
@@ -7,7 +7,7 @@ with open("README.md", encoding="utf-8") as f:
 setup(
     name="lightning_utils",
     packages=find_packages(include=["lighning_utils"]),  # add other exclusions in future
-    version=__version__,
+    version="0.0.1",
     license="MIT",
     description="A collection of utilities for PyTorch Lightning.",
     long_description=long_description,
