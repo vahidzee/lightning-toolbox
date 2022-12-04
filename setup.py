@@ -6,8 +6,8 @@ with open("README.md", encoding="utf-8") as f:
 
 setup(
     name="lightning_toolbox",
-    packages=find_packages(include=["lightning_toolbox/*"]),
-    version="0.0.2",
+    packages=find_packages(include=["lightning_toolbox", "lightning_toolbox.*"]),
+    version="0.0.3",
     license="MIT",
     description="A collection of utilities for PyTorch Lightning.",
     long_description=long_description,
