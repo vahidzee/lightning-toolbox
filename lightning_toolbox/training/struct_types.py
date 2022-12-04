@@ -1,6 +1,5 @@
 import typing as th
 import torch
-import pytorch_lightning as pl
 import dycode as dy
 
 
