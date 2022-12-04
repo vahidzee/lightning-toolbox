@@ -219,7 +219,7 @@ class TrainingModule(lightning.LightningModule):
         transformed_batch = self.process_batch(
             batch, transformed_batch=transformed_batch, transform_batch=transform_batch
         )
-        results, factors = self.criterion(batch=batch, training_module=self, return_factors=True, **kwargs)
+        results, factors = self.criterion(batch=transformed_batch, training_module=self, return_factors=True, **kwargs)
         if log_results:
             self.log_step_results(results, factors, name)
         if return_results:
