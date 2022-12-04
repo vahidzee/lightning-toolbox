@@ -1,6 +1,6 @@
 import typing as th
 import torch
-import pytorch_lightning as pl
+import lightning
 import functools
 from .terms import CriterionTerm
 from .struct_types import ResultsDict, FactorsDict, TermDescriptor
@@ -81,7 +81,7 @@ class Criterion:
         self,
         *args,
         batch: th.Any = None,
-        training_module: pl.LightningModule = None,
+        training_module: lightning.LightningModule = None,
         terms: th.Union[str, th.List[CriterionTerm]] = "terms",
         **kwargs,
     ):
@@ -115,7 +115,7 @@ class Criterion:
         self,
         *args,
         batch: th.Any = None,
-        training_module: pl.LightningModule = None,
+        training_module: lightning.LightningModule = None,
         return_factors: bool = True,
         **kwargs,
     ) -> th.Union[ResultsDict, th.Tuple[ResultsDict, FactorsDict]]:

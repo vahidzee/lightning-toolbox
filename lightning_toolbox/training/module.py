@@ -1,7 +1,7 @@
 import torch
 import typing as th
 import functools
-import pytorch_lightning as pl
+import lightning
 from ..utils import freeze_params, unfreeze_params, list_args
 import dycode as dy
 from .criterion import Criterion
@@ -9,7 +9,7 @@ import torch
 import types
 
 
-class TrainingModule(pl.LightningModule):
+class TrainingModule(lightning.LightningModule):
     """
     Generic Lightning Module for training MADE models.
 

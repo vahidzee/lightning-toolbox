@@ -1,6 +1,6 @@
 import torch
 import functools
-import pytorch_lightning as pl
+import lightning
 import dycode as dy
 import typing as th
 from .struct_types import ResultsDict, FactorsDict, TermDescriptor
@@ -84,7 +84,7 @@ class CriterionTerm:
         compiled = dy.eval_function(self._factor_description, function_of_interest="factor")
         return dy.dynamic_args_wrapper(compiled) if callable(compiled) else compiled
 
-    def factor_value(self, results_dict: ResultsDict, training_module: pl.LightningModule) -> torch.Tensor:
+    def factor_value(self, results_dict: ResultsDict, training_module: lightning.LightningModule) -> torch.Tensor:
         """
         Computes the final factor value to be applied to the term value.
         By default this is a wrapper around the `factor` (function/float) that is passed to the term constructor.
@@ -101,7 +101,7 @@ class CriterionTerm:
                 if this dictionary is proccessed by the `Criterion` class it will contain `term/<term_name>` and
                 `regularization/<term_name>` entries for each term and regularization in the criterion.
 
-            training_module (pl.LightningModule): The training module that is being trained.
+            training_module (lightning.LightningModule): The training module that is being trained.
 
         Returns:
             number: The factor value to be applied to the term value.
@@ -120,7 +120,7 @@ class CriterionTerm:
         Args:
             term_value (number): The term value to be scaled.
             results_dict (ResultsDict): Dictionary containing the results of other terms in the objective function.
-            training_module (pl.LightningModule): The training module that is being trained.
+            training_module (lightning.LightningModule): The training module that is being trained.
 
         Returns:
             number: The scaled term value.
@@ -135,7 +135,7 @@ class CriterionTerm:
         term_value: th.Optional[torch.Tensor] = None,
         factor_value: th.Optional[torch.Tensor] = None,
         term_results: th.Optional[ResultsDict] = None,
-        training_module: th.Optional[pl.LightningModule] = None,
+        training_module: th.Optional[lightning.LightningModule] = None,
     ) -> torch.Tensor:
         """
         Applies the factor to the term value. Based on the `factor_application` attribute, this can be either
@@ -149,7 +149,7 @@ class CriterionTerm:
             factor_value (torch.Tensor): The factor value to be applied to the term value.
                 If no factor value is provided the factor value will be computed using `self.factor_value`.
             term_results (ResultsDict): Dictionary containing the results of this term, and other terms in the objective function.
-            training_module (pl.LightningModule): The training module that is being trained.
+            training_module (lightning.LightningModule): The training module that is being trained.
 
         Returns:
             torch.Tensor: The scaled term value.
@@ -179,7 +179,7 @@ class CriterionTerm:
         return dy.eval(self._term_function_description, function_of_interest="term", strict=False, dynamic_args=True)
 
     def __call__(
-        self, *args, batch: th.Any = None, training_module: pl.LightningModule = None, **kwargs
+        self, *args, batch: th.Any = None, training_module: lightning.LightningModule = None, **kwargs
     ) -> torch.Tensor:
         """
         Computes the term value. This is the main method of the `Term` class. It is called by the `Criterion` class
@@ -193,7 +193,7 @@ class CriterionTerm:
         Args:
             *args: Additional arguments to be passed to the `term_function`.
             batch (th.Any): The batch of data that is being processed.
-            training_module (pl.LightningModule): The training module that is being trained.
+            training_module (lightning.LightningModule): The training module that is being trained.
             **kwargs: Additional keyword arguments to be passed to the `term_function`.
 
         Note:
