@@ -26,7 +26,7 @@ class TrainingModule(lightning.LightningModule):
         model_cls: th.Optional[str] = None,
         model_args: th.Optional[dict] = None,
         # criterion
-        criterion: th.Union[Criterion, str] = "torchde.training.Criterion",
+        criterion: th.Union[Criterion, str] = "lightning_toolbox.Criterion",
         criterion_args: th.Optional[dict] = None,
         # input transforms [transform(inputs) -> torch.Tensor]
         batch_transform: th.Optional[dy.FunctionDescriptor] = None,
@@ -276,8 +276,14 @@ class TrainingModule(lightning.LightningModule):
     def __configure_optimizer(self, opt_class, opt_base_lr, opt_args, opt_parameters):
         opt_class = dy.eval(opt_class)
         opt_args = {"lr": opt_base_lr, **(opt_args if opt_args is not None else {})}
+        params = dy.eval(opt_parameters, context=self) if opt_parameters else self
+        if isinstance(params, torch.Tensor):
+            params = [params]
+        else:
+            params = params.parameters() if hasattr(params, "parameters") else params
+
         opt = opt_class(
-            (dy.eval(opt_parameters, context=self) if opt_parameters else self).parameters(),
+            params,
             **opt_args,
         )
         return opt
