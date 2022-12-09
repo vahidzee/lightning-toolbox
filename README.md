@@ -3,5 +3,5 @@
 ## Installation
 
 ```bash
-pip install lightning-utils
+pip install lightning-toolbox
 ```
