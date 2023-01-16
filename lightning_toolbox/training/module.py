@@ -3,7 +3,7 @@ import typing as th
 import functools
 import lightning
 from ..utils import freeze_params, unfreeze_params, list_args
-import dycode as dy
+import dypy as dy
 from .criterion import Criterion
 import torch
 import types

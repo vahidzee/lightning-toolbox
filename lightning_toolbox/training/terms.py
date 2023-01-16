@@ -1,7 +1,7 @@
 import torch
 import functools
 import lightning
-import dycode as dy
+import dypy as dy
 import typing as th
 from .struct_types import ResultsDict, FactorsDict, TermDescriptor
 
@@ -55,7 +55,7 @@ class CriterionTerm:
                 If you
             term_function (FunctionDescriptor): Function that computes the term value. This can be a function that takes
                 the training_module, batch, [results_dict], and any other argument and returns a torch.Tensor.
-                This function will be processed using `dycode.eval`. See `dycode.eval` documentation for more details.
+                This function will be processed using `dypy.eval`. See `dypy.eval` documentation for more details.
 
             factor_application (str): How the factor is applied to the term value. Can be "multiply" or "add".
 
@@ -172,7 +172,7 @@ class CriterionTerm:
         """
         Compiled version of the term function provided to the constructor in the `term_function` argument.
 
-        The function descriptor is processed using `dycode.eval` and the result is cached using `functools.cached_property`.
+        The function descriptor is processed using `dypy.eval` and the result is cached using `functools.cached_property`.
         By setting dynamic_args=True when evaluating the function, the function will be wrapped in a `dynamic_args_wrapper`
         that will allow it to be called with any arguments.
         """

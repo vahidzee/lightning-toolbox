@@ -16,7 +16,7 @@ setup(
     author_email="vahid@zehtab.me",
     url="https://github.com/vahidzee/lightning_toolbox",
     keywords=["artificial intelligence", "pytorch lightning", "objective functions", "regularization"],
-    install_requires=["torch>=1.9", "lightning", "dycode"],
+    install_requires=["torch>=1.9", "lightning", "dypy"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

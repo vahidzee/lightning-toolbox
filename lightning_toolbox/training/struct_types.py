@@ -1,6 +1,6 @@
 import typing as th
 import torch
-import dycode as dy
+import dypy as dy
 
 
 # types
