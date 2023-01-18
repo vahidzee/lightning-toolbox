@@ -66,7 +66,20 @@ class CriterionTerm:
         self.initialize_factor_attributes(factor_application, factor)
         self._term_function_description = term_function or kwargs
         self._scale_factor = scale_factor
+        self._criterion = None
 
+    # link to criterion
+    @property
+    def remember(self):
+        return self._criterion.remember
+
+    def _register_criterion(self, criterion):
+        """Register a link to the criterion that this term belongs to.
+
+        This is used to access criterions' attributes such as latch/.
+        """
+        self._criterion = criterion
+    
     def initialize_factor_attributes(
         self,
         factor_application: th.Optional[str] = None,
@@ -217,7 +230,8 @@ class CriterionTerm:
         description: th.Union["CriterionTerm", TermDescriptor],
         # overwrite attributes of the instance
         name: th.Optional[str] = None,
-        factor_application: th.Optional[str] = None,  # multiply or addÍ
+        factor_application: th.Optional[str] = None,  # multiply or add
+        criterion: th.Optional["Criterion"] = None,
     ) -> "CriterionTerm":
         """
         Creates a `CriterionTerm` instance from a `TermDescriptor` object.
@@ -226,7 +240,7 @@ class CriterionTerm:
             description (TermDescriptor): The term descriptor.
             name (str): The name of the term. If not provided, the name from the description will be used.
             factor_application (str): The factor application. If not provided, the factor application from the description will be used.
-
+            criterion (Criterion): The criterion that this term belongs to.
         Returns:
             CriterionTerm: The criterion term.
         """
@@ -248,4 +262,6 @@ class CriterionTerm:
             term.name = name
         if factor_application is not None:
             term.initialize_factor_attributes(factor_application=factor_application)
+        if criterion is not None:
+            term._register_criterion(criterion)
         return term

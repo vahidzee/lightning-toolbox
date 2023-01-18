@@ -36,6 +36,8 @@ class Criterion:
         overall_reduction: Reduction method to use for overall loss.
     """
 
+    latch: th.Dict[th.Any, th.Any]
+
     def __init__(
         self,
         terms: th.Optional[th.Union[th.List[TermDescriptor], th.Tuple[TermDescriptor]]] = None,
@@ -46,21 +48,36 @@ class Criterion:
     ):
         self.terms = [
             CriterionTerm.from_description(
-                term, factor_application="add" if terms_reduction == "multiply" else "multiply"
+                term,
+                factor_application="add" if terms_reduction == "multiply" else "multiply",
+                criterion=self,
             )
             for term in terms
         ]
         self.regularizations = [
             CriterionTerm.from_description(
-                term, factor_application="add" if regularizations_reduction == "multiply" else "multiply"
+                term,
+                factor_application="add" if regularizations_reduction == "multiply" else "multiply",
+                criterion=self,
             )
             for term in (regularizations or [])
         ]
+
         self.rename_terms(terms=self.terms, prefix="term/")
         self.rename_terms(terms=self.regularizations, prefix="regularization/")
         self.terms_reduction = terms_reduction
         self.regularizations_reduction = regularizations_reduction
         self.overall_reduction = overall_reduction
+        # initialize the latch
+        self.latch = {}
+
+    def remember(self, **kwargs):
+        """Keep some values for later use. Get's cleared after each call to __call__"""
+        self.latch.update(kwargs)
+
+    def _forget(self):
+        """Forget all remembered values."""
+        self.latch.clear()
 
     @staticmethod
     def rename_terms(terms: th.List[CriterionTerm], prefix: str = "") -> None:
@@ -119,6 +136,9 @@ class Criterion:
         return_factors: bool = True,
         **kwargs,
     ) -> th.Union[ResultsDict, th.Tuple[ResultsDict, FactorsDict]]:
+        # clear the latch
+        self._forget()
+
         results = self.process_term_results(
             *args, batch=batch, training_module=training_module, **kwargs, terms=self.terms + self.regularizations
         )
