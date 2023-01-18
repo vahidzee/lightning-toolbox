@@ -4,7 +4,7 @@ import functools
 import lightning
 from ..utils import freeze_params, unfreeze_params, list_args
 import dypy as dy
-from .criterion import Criterion
+from ..criterion import Criterion
 import torch
 import types
 
@@ -410,8 +410,8 @@ class TrainingModule(lightning.LightningModule):
             return loss
         for optimizer_idx, optimizer in enumerate(optimizers):
             if optimizer_is_active[optimizer_idx]:
-                optimizer.step()  # todo: add support for LBFGS optimizers via closures
-                optimizer.zero_grad()  # todo: move to before the backward call and add support for gradient accumulation
+                optimizer.step()  # TODO: add support for LBFGS optimizers via closures
+                optimizer.zero_grad()  # TODO: move to before the backward call and add support for gradient accumulation
         # following pytorch>=1.1.0 conventions, calling scheduler.step after optimizer.step
         # visit the docs for more details https://pytorch.org/docs/stable/optim.html#how-to-adjust-learning-rate
         for idx, scheduler in enumerate(schedulers):
