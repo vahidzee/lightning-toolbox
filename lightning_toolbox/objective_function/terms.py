@@ -1,10 +1,23 @@
+# Copyright Vahid Zehtab (vahid@zehtab.me) 2021
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 import torch
 import functools
 import dypy as dy
 import typing as th
 
 
-class CriterionTerm:
+class ObjectiveTerm:
     def __init__(
         self,
         name: str = None,
@@ -15,28 +28,29 @@ class CriterionTerm:
     ) -> None:
         """
         Term is a single value that is used to compute the objective function (e.g. MSE, KL, etc.).
-        Terms can be combined into a Criterion, which is a collection of terms that are summed together.
+        Terms can be combined into an Objective, which is a collection of terms that are (by default) summed together.
 
         You can use the Term class in two ways:
         1. You can pass a function that computes the term value, and optionally a factor that scales the term value.
-        2. You can inherit from the CriterionTerm class and implement the __call__ method and optionally other methods.
+        2. You can inherit from the ObjectiveTerm class and implement the __call__ method and optionally other methods.
 
         Args:
             name (str): name of the term. This is used to identify the term in the results dictionary. If not provided,
                 the name of the term-class is used.
+
             factor (float or FunctionDescriptor): Factor that scales the term value.
                 this can be a single float value, or a function that computes the factor value. (all the arguments
-                passed to the criterion are passed to the factor function as well), and through `self.criterion` one
-                can access the latches of the criterion (e.g. `self.criterion.results`, `self.criterion.latch`).
+                passed to the objective are passed to the factor function as well), and through `self.objective` one
+                can access the latches of the objective (e.g. `self.objective.results`, `self.objective.latch`).
 
                 Example:
                     1. factor annealed with the reciprocal of the number of epochs:
                     >>> factor = "lambda self, training_module: 1/training_module.trainer.current_epoch"
 
                     2. factor with twice the value of the term "mse":
-                    >>> factor = "lambda self, training_module: 2*self.criterion.results['mse']"
+                    >>> factor = "lambda self, training_module: 2*self.objective.results['mse']"
 
-                Use this option only if you don't want to inherit from the CriterionTerm class. In general, it is
+                Use this option only if you don't want to inherit from the ObjectiveTerm class. In general, it is
                 recommended to use this option since it provides most of the functionality one requires for applying
                 a factor to a term.
 
@@ -62,19 +76,24 @@ class CriterionTerm:
         self._factor_description = factor if factor is not None else 1.0
         self._term_function_description = term_function or kwargs
         self._scale_factor = scale_factor
-        self.criterion = None
+        self.objective: "training_toolbox.Objective" = None
 
-    # link to criterion
+    # link to objective
     @property
     def remember(self):
-        return self.criterion.remember
+        return self.objective.remember
 
-    def _register_criterion(self, criterion):
-        """Register a link to the criterion that this term belongs to.
+    def _register_objective(self, objective):
+        """Register a link to the objective that this term belongs to.
 
-        This is used to access criterions' attributes such as latch/.
+        This is used to access objectives' attributes such as latch/.
         """
-        self.criterion = criterion
+        self.objective = objective
+
+    @property
+    def factor(self):
+        """Returns the factor-value function"""
+        return self._compute_factor
 
     @functools.cached_property
     def _compiled_factor(self):
@@ -82,7 +101,7 @@ class CriterionTerm:
         return dy.dynamic_args_wrapper(compiled) if callable(compiled) else compiled
 
     # TODO: rewrite as @dy.method(signature="dynamic")
-    def factor_value(self, *args, **kwargs) -> torch.Tensor:
+    def _compute_factor(self, *args, **kwargs) -> torch.Tensor:
         """
         Computes the final factor value to be applied to the term value.
         By default this is a wrapper around the `factor` (function/float) that is passed to the term constructor.
@@ -96,8 +115,8 @@ class CriterionTerm:
 
         Args:
             results_dict (ResultsDict): Dictionary containing the results of other terms in the objective function.
-                if this dictionary is proccessed by the `Criterion` class it will contain `term/<term_name>` and
-                `regularization/<term_name>` entries for each term and regularization in the criterion.
+                if this dictionary is proccessed by the `Objective` class it will contain `term/<term_name>` and
+                `regularization/<term_name>` entries for each term and regularization in the objective.
 
             training_module (lightning.LightningModule): The training module that is being trained.
 
@@ -125,8 +144,8 @@ class CriterionTerm:
         if self._scale_factor:
             return (
                 factor_value
-                * self.criterion.results_latch[self._scale_factor].data.clone()
-                / self.criterion.results_latch[self.name].data.clone()
+                * self.objective.results_latch[self._scale_factor].data.clone()
+                / self.objective.results_latch[self.name].data.clone()
             )
         else:
             return factor_value
@@ -159,12 +178,12 @@ class CriterionTerm:
     # TODO: rewrite with a @dy.method(signature="dynamic") base term_function
     def __call__(self, *args, **kwargs) -> torch.Tensor:
         """
-        Computes the term value. This is the main method of the `Term` class. It is called by the `Criterion` class
+        Computes the term value. This is the main method of the `Term` class. It is called by the `Objective` class
         when computing the objective function value.
 
         If this method is not overridden, it will call the `term_function` that was provided to the constructor.
         The `term_function` should have the signature `term_function(*args, **kwargs)` where `*args` and `**kwargs`
-        are any arguments provided by the user when calling the criterion.
+        are any arguments provided by the user when calling the objective.
 
         Args:
             *args: arguments to be passed to the `term_function`.
@@ -188,37 +207,38 @@ class CriterionTerm:
 
     @staticmethod
     def from_description(
-        description: th.Union["CriterionTerm", "TermDescriptor"],
+        description: th.Union["ObjectiveTerm", "TermDescriptor"],
         # overwrite attributes of the instance
         name: th.Optional[str] = None,
-        criterion: th.Optional["Criterion"] = None,
-    ) -> "CriterionTerm":
+        objective: th.Optional["Objective"] = None,
+    ) -> "ObjectiveTerm":
         """
-        Creates a `CriterionTerm` instance from a `TermDescriptor` object.
+        Creates a `ObjectiveTerm` instance from a `TermDescriptor` object.
 
         Args:
             description (TermDescriptor): The term descriptor.
             name (str): The name of the term. If not provided, the name from the description will be used.
-            criterion (Criterion): The criterion that this term belongs to.
+            objective (Objective): The objective that this term belongs to.
         Returns:
-            CriterionTerm: The criterion term.
+            ObjectiveTerm: The objective term.
         """
-        if isinstance(description, CriterionTerm):
+        if isinstance(description, ObjectiveTerm):
             term = description
         elif isinstance(description, str):
-            try:
-                term = dy.eval(description, dynamic_args=True)()
-            except:
-                term = CriterionTerm(term_function=description, name=name)
+            term = ObjectiveTerm.from_description(dy.eval(description, dynamic_args=True, strict=False))
+        elif isinstance(description, type) and issubclass(description, ObjectiveTerm):
+            term = description()
+        elif callable(description):
+            term = ObjectiveTerm(term_function=description)
         # else the description is a dict
         # checking if the description provides a class_path to instantiate a previously defined term
         elif "class_path" in description:
             term = dy.eval(description["class_path"])(**description.get("init_args", dict()))
         # else the description is a dict with required fields to instantiate a new term
         else:
-            term = CriterionTerm(**description)
+            term = ObjectiveTerm(**description)
         if name is not None:
             term.name = name
-        if criterion is not None:
-            term._register_criterion(criterion)
+        if objective is not None:
+            term._register_objective(objective)
         return term
