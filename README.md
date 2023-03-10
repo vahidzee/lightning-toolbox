@@ -1,7 +1,6 @@
-# Lightning Toolbox: Automization tools for writing Pytorch Lightning experiments
-
+# LightningToolbox: A PyTorch Lightning Facilitator
 <p align="center">
-  <a href="installation">Installation</a> •
+  <a href="#installation">Installation</a> •
   <a href="./docs/README.md">Docs</a> •
   <a href="#license">License</a>
 </p>
