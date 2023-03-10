@@ -48,7 +48,7 @@ You can tell `DataModule` to import your intended dataset classes by passing the
 As mentioned before, the `val_size` argument can be either an int specifying how many samples from the dataset are to be considered as the validation split or a float number between 0. and 1. specifying the portion of the data that should be used for validation. The `seed` argument is used for the random split.
 
 * If you want to use a different dataset for validation, you can specify it in the `val_dataset` and `val_dataset_args` arguments, where `val_dataset` should either be a dataset instance or a dataset class/import-path. If a dataset instance is provided as `val_dataset` then `val_dataset_args` are ignored.
-* If You don't want to use a validation split, you can set `val_size=0`.
+* If You don't want to use a validation split, you can set `val_size=0`, and `val_batch_size=0`.
 * When using `val_dataset`, `val_size` is automatically regarded as zero. Meaning that if a `dataset` is also provided, it is considered completely as the training split.
 
 The following example creates a datamodule for the `MNIST` dataset and uses 20% of it as its validation split.
@@ -96,5 +96,10 @@ dm = DataModule(
 )
 ```
 
+## Extending Core functionality through Inheritance
+You may wish to extend the base functionality of `lightning_toolbox.DataModule` perhaps to only use the dataloader configurations, or provide your own `perepare_data` method. The only thing to keep in mind is that, if you want to use the dataloader's functionality, your datamodule should have `train_data`, `val_data` and `test_data` specified by the time lightning want's to call the dataloaders functions.
 
+If you wish to use dataset lookup functionality the lookup process is done through [`dypy.eval`](https://github.com/vahidzee/dypy#dynamic-evaluation) and made available through the static method `get_dataset`. In order to use higher-level functionalities such as dataset splitting or dataloaders configurations.
+
+If you wish to setup your own dataset and then split it into validation and train, call `self.split_dataset()`, which by default takes place inside the fit stage of `setup`. You just need to set `self.train_data`, `self.val_data` and `self.dataset` accordingly.
 
