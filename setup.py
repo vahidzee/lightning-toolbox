@@ -20,7 +20,7 @@ with open("README.md", encoding="utf-8") as f:
 setup(
     name="lightning_toolbox",
     packages=find_packages(include=["lightning_toolbox", "lightning_toolbox.*"]),
-    version="0.0.13",
+    version="0.0.14",
     license="MIT",
     description="A collection of utilities for PyTorch Lightning.",
     long_description=long_description,
@@ -29,7 +29,7 @@ setup(
     author_email="vahid@zehtab.me",
     url="https://github.com/vahidzee/lightning-toolbox",
     keywords=["artificial intelligence", "pytorch lightning", "objective functions", "regularization"],
-    install_requires=["torch>=1.9", "lightning", "dypy"],
+    install_requires=["torch>=1.9", "lightning>=1.9.0", "dypy"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
@@ -37,4 +37,8 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.8",
     ],
+    python_requires=">=3.8",
+    entry_points={
+        "console_scripts": ["lightning_toolbox=lightning_toolbox.main:main"],
+    },
 )
