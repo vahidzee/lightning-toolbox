@@ -20,7 +20,7 @@ import typing as th
 class ObjectiveTerm:
     def __init__(
         self,
-        name: str = None,
+        name: th.Optional[str] = None,
         factor: th.Optional[th.Union[float, dy.FunctionDescriptor]] = None,
         scale_factor: th.Optional[str] = None,
         term_function: th.Optional[dy.FunctionDescriptor] = None,
@@ -72,11 +72,11 @@ class ObjectiveTerm:
             factor_application (str): How the factor is applied to the term value. Can be "multiply" or "add".
 
         """
-        self.name = name or self.__class__.__name__
-        self._factor_description = factor if factor is not None else 1.0
-        self._term_function_description = term_function or kwargs
-        self._scale_factor = scale_factor
-        self.objective: "training_toolbox.Objective" = None
+        self.name = str(name if name is not None else self.__class__.__name__)
+        self._factor_description: th.Union[float, dy.FunctionDescriptor] = factor if factor is not None else 1.0
+        self._term_function_description: dy.FunctionDescriptor = term_function or kwargs
+        self._scale_factor: th.Optional[str] = scale_factor
+        self.objective: "lightning_toolbox.Objective" = None  # type: ignore
 
     # link to objective
     @property
@@ -94,6 +94,13 @@ class ObjectiveTerm:
     def factor(self):
         """Returns the factor-value function"""
         return self._compute_factor
+
+    @factor.setter
+    def factor(self, factor):
+        """Sets the factor of the term. and clears the cache of the compiled factor function."""
+        self._factor_description = factor
+        if "_compiled_factor" in self.__dict__:
+            del self.__dict__["_compiled_factor"]
 
     @functools.cached_property
     def _compiled_factor(self):
@@ -130,8 +137,16 @@ class ObjectiveTerm:
         )
         return self.scale_factor(factor_value)
 
+    @property
+    def scale_factor(self):
+        return self._compute_scaled_factor
+
+    @scale_factor.setter
+    def scale_factor(self, scale_factor):
+        self._scale_factor = scale_factor
+
     # TODO: rewrite as @dy.method(signature="strict")
-    def scale_factor(self, factor_value) -> th.Union[torch.Tensor, int, float]:
+    def _compute_scaled_factor(self, factor_value) -> th.Union[torch.Tensor, int, float]:
         """
         Applies the scale factor to the term value. This is used to scale the factor value by the ratio of some other term value
 
@@ -144,8 +159,8 @@ class ObjectiveTerm:
         if self._scale_factor:
             return (
                 factor_value
-                * self.objective.results_latch[self._scale_factor].data.clone()
-                / self.objective.results_latch[self.name].data.clone()
+                * self.objective.results[self._scale_factor].data.clone()
+                / self.objective.results[self.name].data.clone()
             )
         else:
             return factor_value
@@ -238,7 +253,7 @@ class ObjectiveTerm:
         else:
             term = ObjectiveTerm(**description)
         if name is not None:
-            term.name = name
+            term.name = str(name)
         if objective is not None:
             term._register_objective(objective)
         return term
