@@ -1,7 +1,7 @@
 # LightningToolbox: A PyTorch Lightning Facilitator
 <p align="center">
   <a href="#installation">Installation</a> •
-  <a href="https://github.com/vahidzee/lightning-toolbox/docs/README.md">Docs</a> •
+  <a href="https://github.com/vahidzee/lightning-toolbox/tree/main/docs/README.md">Docs</a> •
   <a href="#license">License</a>
 </p>
 
@@ -27,4 +27,4 @@ Lightning toolbox is tested on `lightning==1.9.0`, although there's no version r
 
 ## License
 
-This project is licensed under the terms of the Apache 2.0 license. See [LICENSE](https://github.com/vahidzee/lightning-toolbox/LICENSE) for more details.
+This project is licensed under the terms of the Apache 2.0 license. See [LICENSE](https://github.com/vahidzee/lightning-toolbox/tree/main/LICENSE) for more details.
