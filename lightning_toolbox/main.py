@@ -19,7 +19,7 @@ from importlib.metadata import version
 
 def main():
     print(f"lightning_toolbox version {version('lightning-toolbox')} invoked")
-    LightningCLI(TrainingModule, DataModule, subclass_mode_model=True)
+    LightningCLI(TrainingModule, DataModule, subclass_mode_model=True, subclass_mode_data=True)
 
 
 if __name__ == "__main__":

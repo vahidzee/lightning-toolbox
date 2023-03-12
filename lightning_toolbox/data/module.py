@@ -108,7 +108,7 @@ class DataModule(lightning.LightningDataModule):
     @staticmethod
     def get_dataset(dataset: th.Union[str, Dataset], **params):
         assert isinstance(
-            dataset, (type, str)
+            dataset, (type, str, Dataset)
         ), "dataset should either be a dataset instance, a dataset class or an import-paths str"
         if isinstance(dataset, Dataset):
             return dataset

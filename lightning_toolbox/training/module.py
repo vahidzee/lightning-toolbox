@@ -128,6 +128,8 @@ class TrainingModule(lightning.LightningModule):
         ]
 
     def is_optimizer_active(self, optimizer_idx: int, batch_idx: int, epoch: int) -> bool:
+        if optimizer_idx is None:
+            return True
         is_active = self.__optimizers_is_active_list[optimizer_idx]
         result = is_active is None or (isinstance(is_active, bool) and is_active)
         if callable(is_active):
@@ -169,8 +171,6 @@ class TrainingModule(lightning.LightningModule):
         ):
             return None  # this will skip this step, but the optimizer position will be incremented
             # TODO: check if how this affects the schedulers
-
-        print(f"Step {name} {batch_idx} with optimizer {optimizer_idx}", self.global_step)
         results, factors = self.objective(
             batch=batch,
             optimizer_idx=optimizer_idx,
