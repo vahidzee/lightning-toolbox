@@ -15,6 +15,7 @@ import typing as th
 import torch
 import dypy as dy
 from .terms import ObjectiveTerm
+import warnings
 
 # register torch with dypy
 dy.register_context(torch)
@@ -131,6 +132,9 @@ class Objective:
         Args:
             *args, **kwargs: the arguments passed to the objective are directly passed to the terms.
         """
+        if len(self.terms) == 0:
+            warnings.warn("No terms provided to the objective. Undefined behaviour might occur", RuntimeWarning)
+
         for term in self.terms:
             term_results = term(*args, **kwargs)
             if isinstance(term_results, dict):
