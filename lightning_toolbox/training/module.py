@@ -25,24 +25,25 @@ class TrainingModule(lightning.LightningModule):
     def __init__(
         self,
         # model
-        model: th.Optional[torch.nn.Module] = None,
+        model: th.Optional[torch.nn.Module] = None,  # model instance
         model_cls: th.Optional[str] = None,
         model_args: th.Optional[dict] = None,
         # objective
-        objective: th.Union[Objective, str] = "lightning_toolbox.Objective",
+        objective: th.Optional[Objective] = None,  # objective instance
+        objective_cls: th.Union[type, str] = "lightning_toolbox.Objective",
         objective_args: th.Optional[dict] = None,
         # optimization configs
-        optimizer: th.Union[str, th.List[str], None] = None,
+        optimizer: th.Union[str, type, th.List[th.Union[str, type]], None] = None,  # optimizer name or class
         optimizer_frequency: th.Union[int, th.List[th.Optional[int]], None] = None,
         optimizer_is_active: th.Optional[th.Union[dy.FunctionDescriptor, th.List[dy.FunctionDescriptor]]] = None,
-        optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,
+        optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,  # optimizer parameters (self.<*>)
         optimizer_args: th.Optional[dict] = None,
         # learning rate
         lr: th.Union[th.List[float], float] = 1e-4,
         # schedulers
-        scheduler: th.Optional[th.Union[str, th.List[str]]] = None,
+        scheduler: th.Optional[th.Union[str, type, th.List[th.Union[str, type]]]] = None,  # scheduler name or class
         scheduler_name: th.Optional[th.Union[str, th.List[str]]] = None,
-        scheduler_optimizer: th.Optional[th.Union[int, th.List[int]]] = None,
+        scheduler_optimizer: th.Optional[th.Union[int, th.List[int]]] = None,  # optimizer index
         scheduler_args: th.Optional[th.Union[dict, th.List[dict]]] = None,
         scheduler_interval: th.Union[str, th.List[str]] = "epoch",
         scheduler_frequency: th.Union[int, th.List[int]] = 1,
@@ -56,9 +57,12 @@ class TrainingModule(lightning.LightningModule):
             super().__init__()
         if save_hparams:
             self.save_hyperparameters(ignore=["model"])
-        # objective and attacks can be different from the checkpointed model
-        objective = dy.eval(objective) if isinstance(objective, str) else objective
-        self.objective = objective if isinstance(objective, Objective) else objective(**(objective_args or dict()))
+
+        # objective
+        if objective is not None or objective_cls is not None:
+            self.objective = (
+                objective if objective is not None else dy.eval(objective_cls)(**(objective_args or dict()))
+            )
 
         # optimizers
         self.optimizers_list = ArgsListDict(
@@ -165,12 +169,14 @@ class TrainingModule(lightning.LightningModule):
             None if the model is in evaluation mode, else a tensor with the training objective
         """
         is_val = name == "val"
+        assert hasattr(self, "objective"), "No objective defined"
 
         if not is_val and not self.is_optimizer_active(
             optimizer_idx=optimizer_idx, batch_idx=batch_idx, epoch=self.current_epoch
         ):
             return None  # this will skip this step, but the optimizer position will be incremented
             # TODO: check if how this affects the schedulers
+
         results, factors = self.objective(
             batch=batch,
             optimizer_idx=optimizer_idx,
