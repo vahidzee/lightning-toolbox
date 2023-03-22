@@ -168,16 +168,10 @@ class Objective:
         self, *args, return_factors: bool = False, **kwargs
     ) -> th.Union[ResultsDict, th.Tuple[ResultsDict, FactorsDict]]:
         self._forget()  # clear the latches
-
-        # Save all the input arguments in the latch
-        self.inputs_latch.update(kwargs)
-
+        self.inputs_latch.update(kwargs)  # save all the input arguments in the latch
         self.process_terms_results(*args, **kwargs)  # process the terms
         self.factors_latch = {
             term.name: term.factor(*args, **kwargs) for term in self.terms if term.name in self.results_latch
         }  # compute the factor values for the terms that contribute to the loss
-
-        # Save all the results in the latch
-        # reduce the term results with the factors
-        self.results_latch["loss"] = self.reduce()
+        self.results_latch["loss"] = self.reduce()  # reduce the term results with the factors
         return self.results_latch if not return_factors else (self.results_latch, self.factors_latch)

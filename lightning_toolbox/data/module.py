@@ -52,17 +52,26 @@ class DataModule(lightning.LightningDataModule):
         test_num_workers: th.Optional[int] = None,
         # seed
         seed: int = 0,
+        # initialization settings
+        save_hparams: bool = True,
+        initialize_superclass: bool = True,
         # extra parameters (ignored)
         **kwargs,
     ):
-        super().__init__()
+        if initialize_superclass:
+            super().__init__()
+        if save_hparams:  # Save all the hyper parameters for further reference
+            self.save_hyperparameters()
 
         # seed
         self.seed = seed
 
         # data
         self.dataset = dataset
-        self.train_data, self.val_data, self.test_data = None, None, None
+        # dataset instances (not classes) are stored in self.*data variables (set during setup)
+        self.data, self.train_data, self.val_data, self.test_data = None, None, None, None
+
+        # dataset classes (not instances) are stored in self.*dataset variables
         self.train_dataset = train_dataset if train_dataset is not None else dataset
 
         self.val_size = val_size if self.val_data is None else 0  # if val_data is provided, val_size is ignored
@@ -104,10 +113,7 @@ class DataModule(lightning.LightningDataModule):
         self.train_num_workers = train_num_workers if train_num_workers is not None else num_workers
         self.val_num_workers = val_num_workers if val_num_workers is not None else num_workers
         self.test_num_workers = test_num_workers if test_num_workers is not None else num_workers
-        
-        # Save all the hyper parameters for further reference:
-        self.save_hyperparameters()
-        
+
     @staticmethod
     def get_dataset(dataset: th.Union[str, Dataset], **params):
         assert isinstance(
@@ -138,9 +144,8 @@ class DataModule(lightning.LightningDataModule):
             self.train_dataset,
             **self.train_dataset_args,
         )
-        # Also save the dataset for later use
-        self.dataset = dataset
-        
+        self.data = self.train_data  # for ease of access (e.g. for plotting)
+
         if not self.val_size:
             # setup train data (in case validation is not to be a subset of provided dataset with val_size)
             self.train_data = dataset
