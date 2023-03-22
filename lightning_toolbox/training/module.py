@@ -33,17 +33,21 @@ class TrainingModule(lightning.LightningModule):
         objective_cls: th.Union[type, str] = "lightning_toolbox.Objective",
         objective_args: th.Optional[dict] = None,
         # optimization configs
-        optimizer: th.Union[str, type, th.List[th.Union[str, type]], None] = None,  # optimizer name or class
+        # optimizer name or class
+        optimizer: th.Union[str, type, th.List[th.Union[str, type]], None] = None,
         optimizer_frequency: th.Union[int, th.List[th.Optional[int]], None] = None,
         optimizer_is_active: th.Optional[th.Union[dy.FunctionDescriptor, th.List[dy.FunctionDescriptor]]] = None,
-        optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,  # optimizer parameters (self.<*>)
+        # optimizer parameters (self.<*>)
+        optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,
         optimizer_args: th.Optional[dict] = None,
         # learning rate
         lr: th.Union[th.List[float], float] = 1e-4,
         # schedulers
-        scheduler: th.Optional[th.Union[str, type, th.List[th.Union[str, type]]]] = None,  # scheduler name or class
+        # scheduler name or class
+        scheduler: th.Optional[th.Union[str, type, th.List[th.Union[str, type]]]] = None,
         scheduler_name: th.Optional[th.Union[str, th.List[str]]] = None,
-        scheduler_optimizer: th.Optional[th.Union[int, th.List[int]]] = None,  # optimizer index
+        # optimizer index
+        scheduler_optimizer: th.Optional[th.Union[int, th.List[int]]] = None,
         scheduler_args: th.Optional[th.Union[dict, th.List[dict]]] = None,
         scheduler_interval: th.Union[str, th.List[str]] = "epoch",
         scheduler_frequency: th.Union[int, th.List[int]] = 1,
@@ -140,10 +144,23 @@ class TrainingModule(lightning.LightningModule):
             result = is_active(training_module=self, optimizer_idx=optimizer_idx, batch_idx=batch_idx, epoch=epoch)
         return result
 
+    def remember(self, **kwargs: th.Dict[str, th.Any]) -> None:
+        """
+        You can use this function to remember any particular object that you want to
+        use later on.
+
+        **Note**: The values that are remembered will be forgotten soon after every batch
+        so make sure to save them in another logging mechanism if you want to keep them.
+        Typically, this is implemented using a LoggingCallback.
+        """
+        self.objective.remember(**kwargs)
+
     def forward(self, inputs):
         "Placeholder forward pass for the model"
         if hasattr(self, "model") and self.model is not None:
-            return self.model(inputs)
+            # Also pass the training module to the model so that it can access the objective
+            # or any other attribute of the training module that might be needed
+            return self.model(inputs, training_module=self)
         raise NotImplementedError("No model defined")
 
     def step(
