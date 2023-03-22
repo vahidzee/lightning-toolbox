@@ -62,14 +62,16 @@ class Objective:
         *term_args: TermDescriptor,
         **term_kwargs: TermDescriptor,
     ) -> None:
-        term_args = [ObjectiveTerm.from_description(term, objective=self) for term in term_args]
+        term_args = [ObjectiveTerm.from_description(
+            term, objective=self) for term in term_args]
         term_kwargs = [
             ObjectiveTerm.from_description(term, objective=self, name=name) for name, term in term_kwargs.items()
         ]
         self.terms: th.List[ObjectiveTerm] = term_args + term_kwargs
-        self.__rename_terms(terms=self.terms)  # to make sure all terms have unique names
+        # to make sure all terms have unique names
+        self.__rename_terms(terms=self.terms)
         # initialize the latches
-        self.latch, self.results_latch, self.factors_latch = {}, {}, {}
+        self.inputs_latch, self.latch, self.results_latch, self.factors_latch = {}, {}, {}, {}
 
     @property
     def results(self) -> ResultsDict:
@@ -133,14 +135,16 @@ class Objective:
             *args, **kwargs: the arguments passed to the objective are directly passed to the terms.
         """
         if len(self.terms) == 0:
-            warnings.warn("No terms provided to the objective. Undefined behaviour might occur", RuntimeWarning)
+            warnings.warn(
+                "No terms provided to the objective. Undefined behaviour might occur", RuntimeWarning)
 
         for term in self.terms:
             term_results = term(*args, **kwargs)
             if isinstance(term_results, dict):
                 for name in term_results:
                     # for loss, use the term name since it is the overall term value and should be reduced together with other terms
-                    self.results_latch[f"{term.name}/{name}" if name != "loss" else term.name] = term_results[name]
+                    self.results_latch[f"{term.name}/{name}" if name !=
+                                       "loss" else term.name] = term_results[name]
             else:
                 self.results_latch[term.name] = term_results
 
@@ -156,9 +160,11 @@ class Objective:
             The reduced loss/objective value.
         """
         factors_applied_values = [
-            term.apply_factor(term_value=self.results_latch[term.name], factor_value=self.factors_latch[term.name])
+            term.apply_factor(
+                term_value=self.results_latch[term.name], factor_value=self.factors_latch[term.name])
             for term in self.terms
-            if term.name in self.results_latch  # only reduce terms that contribute to the loss
+            # only reduce terms that contribute to the loss
+            if term.name in self.results_latch
         ]
         return sum(factors_applied_values)
 
@@ -166,9 +172,16 @@ class Objective:
         self, *args, return_factors: bool = False, **kwargs
     ) -> th.Union[ResultsDict, th.Tuple[ResultsDict, FactorsDict]]:
         self._forget()  # clear the latches
+
+        # Save all the input arguments in the latch
+        self.inputs_latch.update(kwargs)
+
         self.process_terms_results(*args, **kwargs)  # process the terms
         self.factors_latch = {
             term.name: term.factor(*args, **kwargs) for term in self.terms if term.name in self.results_latch
         }  # compute the factor values for the terms that contribute to the loss
-        self.results_latch["loss"] = self.reduce()  # reduce the term results with the factors
+
+        # Save all the results in the latch
+        # reduce the term results with the factors
+        self.results_latch["loss"] = self.reduce()
         return self.results_latch if not return_factors else (self.results_latch, self.factors_latch)

@@ -33,17 +33,25 @@ class TrainingModule(lightning.LightningModule):
         objective_cls: th.Union[type, str] = "lightning_toolbox.Objective",
         objective_args: th.Optional[dict] = None,
         # optimization configs
-        optimizer: th.Union[str, type, th.List[th.Union[str, type]], None] = None,  # optimizer name or class
-        optimizer_frequency: th.Union[int, th.List[th.Optional[int]], None] = None,
-        optimizer_is_active: th.Optional[th.Union[dy.FunctionDescriptor, th.List[dy.FunctionDescriptor]]] = None,
-        optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,  # optimizer parameters (self.<*>)
+        # optimizer name or class
+        optimizer: th.Union[str, type,
+                            th.List[th.Union[str, type]], None] = None,
+        optimizer_frequency: th.Union[int,
+                                      th.List[th.Optional[int]], None] = None,
+        optimizer_is_active: th.Optional[th.Union[dy.FunctionDescriptor,
+                                                  th.List[dy.FunctionDescriptor]]] = None,
+        # optimizer parameters (self.<*>)
+        optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,
         optimizer_args: th.Optional[dict] = None,
         # learning rate
         lr: th.Union[th.List[float], float] = 1e-4,
         # schedulers
-        scheduler: th.Optional[th.Union[str, type, th.List[th.Union[str, type]]]] = None,  # scheduler name or class
+        # scheduler name or class
+        scheduler: th.Optional[th.Union[str, type,
+                                        th.List[th.Union[str, type]]]] = None,
         scheduler_name: th.Optional[th.Union[str, th.List[str]]] = None,
-        scheduler_optimizer: th.Optional[th.Union[int, th.List[int]]] = None,  # optimizer index
+        # optimizer index
+        scheduler_optimizer: th.Optional[th.Union[int, th.List[int]]] = None,
         scheduler_args: th.Optional[th.Union[dict, th.List[dict]]] = None,
         scheduler_interval: th.Union[str, th.List[str]] = "epoch",
         scheduler_frequency: th.Union[int, th.List[int]] = 1,
@@ -61,7 +69,8 @@ class TrainingModule(lightning.LightningModule):
         # objective
         if objective is not None or objective_cls is not None:
             self.objective = (
-                objective if objective is not None else dy.eval(objective_cls)(**(objective_args or dict()))
+                objective if objective is not None else dy.eval(
+                    objective_cls)(**(objective_args or dict()))
             )
 
         # optimizers
@@ -72,7 +81,8 @@ class TrainingModule(lightning.LightningModule):
             args=optimizer_args,
             frequency=optimizer_frequency,
         )
-        self.optimizers_list = None if self.optimizers_list["optimizer"] is None else self.optimizers_list
+        self.optimizers_list = None if self.optimizers_list[
+            "optimizer"] is None else self.optimizers_list
 
         # learning rate
         self.lr = lr  # populate when configure_optimizers is called
@@ -88,12 +98,14 @@ class TrainingModule(lightning.LightningModule):
             monitor=scheduler_monitor,
             strict=scheduler_strict,
         )
-        self.schedulers_list = None if self.schedulers_list.value(0, "scheduler") is None else self.schedulers_list
+        self.schedulers_list = None if self.schedulers_list.value(
+            0, "scheduler") is None else self.schedulers_list
 
         # cross-populate schedulers (if we have schedulers) if scheduler descriptions have no optimizer specified
         if self.schedulers_list is not None and all(sched["optimizer"] is None for sched in self.schedulers_list):
             # cross-populating schedulers repeats the same scheduler description for each optimizer
-            schedulers_list = self.schedulers_list.cross_populate(length=self.optimizers_list.args_length)
+            schedulers_list = self.schedulers_list.cross_populate(
+                length=self.optimizers_list.args_length)
             # set scheduler optimizers
             schedulers_list["optimizer"] = [
                 i for j in range(self.schedulers_list.args_length) for i in range(self.optimizers_list.args_length)
@@ -108,9 +120,11 @@ class TrainingModule(lightning.LightningModule):
                 else ([self.schedulers_list["name"]] * self.schedulers_list.args_length)
             )
             for idx, sched in enumerate(self.schedulers_list):
-                param_name = self.optimizers_list.value(sched["optimizer"], "parameters")
+                param_name = self.optimizers_list.value(
+                    sched["optimizer"], "parameters")
                 param_name = (
-                    f"/{param_name}" if param_name and isinstance(param_name, str) else f"/{sched['optimizer']}"
+                    f"/{param_name}" if param_name and isinstance(
+                        param_name, str) else f"/{sched['optimizer']}"
                 )
                 self.schedulers_list["name"][
                     idx
@@ -118,7 +132,8 @@ class TrainingModule(lightning.LightningModule):
 
         # initialize the model
         if model is not None or model_args is not None or model_cls is not None:
-            self.model = model if model is not None else dy.eval(model_cls)(**(model_args or dict()))
+            self.model = model if model is not None else dy.eval(
+                model_cls)(**(model_args or dict()))
 
     @functools.cached_property
     def __optimizers_is_active_list(self):
@@ -127,7 +142,8 @@ class TrainingModule(lightning.LightningModule):
         if self.optimizers_list["is_active"] is None:
             return [True for i in range(len(self.optimizers_list["optimizer"]))]
         return [
-            dy.eval(optimizer["is_active"], function_of_interest="is_active", dynamic_args=True, strict=False)
+            dy.eval(optimizer["is_active"], function_of_interest="is_active",
+                    dynamic_args=True, strict=False)
             for optimizer in self.optimizers_list
         ]
 
@@ -135,15 +151,30 @@ class TrainingModule(lightning.LightningModule):
         if optimizer_idx is None:
             return True
         is_active = self.__optimizers_is_active_list[optimizer_idx]
-        result = is_active is None or (isinstance(is_active, bool) and is_active)
+        result = is_active is None or (
+            isinstance(is_active, bool) and is_active)
         if callable(is_active):
-            result = is_active(training_module=self, optimizer_idx=optimizer_idx, batch_idx=batch_idx, epoch=epoch)
+            result = is_active(
+                training_module=self, optimizer_idx=optimizer_idx, batch_idx=batch_idx, epoch=epoch)
         return result
+
+    def remember(self, **kwargs: th.Dict[str, th.Any]) -> None:
+        """
+        You can use this function to remember any particular object that you want to
+        use later on.
+
+        **Note**: The values that are remembered will be forgotten soon after every batch
+        so make sure to save them in another logging mechanism if you want to keep them.
+        Typically, this is implemented using a LoggingCallback.
+        """
+        self.objective.remember(**kwargs)
 
     def forward(self, inputs):
         "Placeholder forward pass for the model"
         if hasattr(self, "model") and self.model is not None:
-            return self.model(inputs)
+            # Also pass the training module to the model so that it can access the objective
+            # or any other attribute of the training module that might be needed
+            return self.model(inputs, training_module=self)
         raise NotImplementedError("No model defined")
 
     def step(
@@ -198,13 +229,16 @@ class TrainingModule(lightning.LightningModule):
             return
         optimizers, schedulers = [], []
         # populate learning rates for each optimizer
-        learning_rates = [i["lr"] for i in ArgsListDict(lr=self.lr, length=self.optimizers_list.args_length)]
+        learning_rates = [i["lr"] for i in ArgsListDict(
+            lr=self.lr, length=self.optimizers_list.args_length)]
 
         # initialize the optimizers
         optimizers_using_frequency = False
         for optimizer, lr in zip(self.optimizers_list, learning_rates):
-            opt_args = {"lr": lr, **(optimizer["args"] if optimizer["args"] is not None else {})}
-            params = dy.eval(optimizer["parameters"], context=self) if optimizer["parameters"] else self
+            opt_args = {
+                "lr": lr, **(optimizer["args"] if optimizer["args"] is not None else {})}
+            params = dy.eval(
+                optimizer["parameters"], context=self) if optimizer["parameters"] else self
             if isinstance(params, torch.Tensor):
                 params = [params]
             else:
@@ -220,7 +254,8 @@ class TrainingModule(lightning.LightningModule):
                 optimizers.append(opt)
             else:
                 optimizers_using_frequency = True
-                optimizers.append(dict(optimizer=opt, frequency=optimizer["frequency"]))
+                optimizers.append(
+                    dict(optimizer=opt, frequency=optimizer["frequency"]))
 
         for sched in self.schedulers_list or []:
             optim = optimizers[sched["optimizer"]]
@@ -240,9 +275,11 @@ class TrainingModule(lightning.LightningModule):
                     raise ValueError(
                         "you cannot have multiple schedulers for the same optimizer, when using optimizer frequency "
                     )  # TODO: use pytorch's ChainedScheduler to chain multiple non-conflicting schedulers
-                optim["lr_scheduler"] = dict(scheduler=scheduler, **instance) if instance else scheduler
+                optim["lr_scheduler"] = dict(
+                    scheduler=scheduler, **instance) if instance else scheduler
             else:
-                schedulers.append(dict(scheduler=scheduler, **instance) if instance else scheduler)
+                schedulers.append(
+                    dict(scheduler=scheduler, **instance) if instance else scheduler)
 
         if schedulers:
             if len(schedulers) == 1 and len(optimizers) == 1:
