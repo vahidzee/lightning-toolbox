@@ -16,6 +16,7 @@ import typing as th
 import functools
 import lightning
 import dypy as dy
+from dypy.core.functions import call_with_dynamic_args
 from lightning_toolbox.objective_function import Objective
 import torch
 from .datastructures import ArgsListDict
@@ -160,7 +161,7 @@ class TrainingModule(lightning.LightningModule):
         if hasattr(self, "model") and self.model is not None:
             # pass the training module to the model so that it can access the objective
             # or any other attribute of the training module that might be needed
-            return self.model(*args, **kwargs, training_module=self)
+            return call_with_dynamic_args(self.model, *args, **kwargs, training_module=self)
         raise NotImplementedError("No model defined")
 
     def step(
