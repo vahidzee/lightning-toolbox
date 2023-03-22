@@ -155,12 +155,12 @@ class TrainingModule(lightning.LightningModule):
         """
         self.objective.remember(**kwargs)
 
-    def forward(self, inputs):
+    def forward(self, *args, **kwargs):
         "Placeholder forward pass for the model"
         if hasattr(self, "model") and self.model is not None:
-            # Also pass the training module to the model so that it can access the objective
+            # pass the training module to the model so that it can access the objective
             # or any other attribute of the training module that might be needed
-            return self.model(inputs, training_module=self)
+            return self.model(*args, **kwargs, training_module=self)
         raise NotImplementedError("No model defined")
 
     def step(
