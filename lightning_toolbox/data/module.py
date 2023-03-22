@@ -104,7 +104,10 @@ class DataModule(lightning.LightningDataModule):
         self.train_num_workers = train_num_workers if train_num_workers is not None else num_workers
         self.val_num_workers = val_num_workers if val_num_workers is not None else num_workers
         self.test_num_workers = test_num_workers if test_num_workers is not None else num_workers
-
+        
+        # Save all the hyper parameters for further reference:
+        self.save_hyperparameters()
+        
     @staticmethod
     def get_dataset(dataset: th.Union[str, Dataset], **params):
         assert isinstance(
@@ -135,6 +138,9 @@ class DataModule(lightning.LightningDataModule):
             self.train_dataset,
             **self.train_dataset_args,
         )
+        # Also save the dataset for later use
+        self.dataset = dataset
+        
         if not self.val_size:
             # setup train data (in case validation is not to be a subset of provided dataset with val_size)
             self.train_data = dataset
