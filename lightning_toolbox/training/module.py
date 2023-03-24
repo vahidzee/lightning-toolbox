@@ -161,7 +161,7 @@ class TrainingModule(lightning.LightningModule):
         if hasattr(self, "model") and self.model is not None:
             # pass the training module to the model so that it can access the objective
             # or any other attribute of the training module that might be needed
-            return call_with_dynamic_args(self.model, *args, **kwargs, training_module=self)
+            return call_with_dynamic_args(self.model.forward, *args, **kwargs, training_module=self)
         raise NotImplementedError("No model defined")
 
     def step(
