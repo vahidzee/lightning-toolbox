@@ -144,7 +144,7 @@ class DataModule(lightning.LightningDataModule):
             self.train_dataset,
             **self.train_dataset_args,
         )
-        self.data = self.train_data  # for ease of access (e.g. for plotting)
+        self.data = dataset  # for ease of access (e.g. for plotting)
 
         if not self.val_size:
             # setup train data (in case validation is not to be a subset of provided dataset with val_size)
