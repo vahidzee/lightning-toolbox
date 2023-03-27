@@ -1,4 +1,4 @@
-# Copyright Vahid Zehtab (vahid@zehtab.me) 2021
+# Copyright Vahid Zehtab (vahid@zehtab.me) 2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,14 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from lightning.pytorch.cli import LightningCLI
-from lightning_toolbox import DataModule, TrainingModule
-
+import lightning
 from importlib.metadata import version
 
 
 def main():
     print(f"lightning_toolbox version {version('lightning-toolbox')} invoked")
-    LightningCLI(TrainingModule, DataModule, subclass_mode_model=True, subclass_mode_data=True)
+    LightningCLI(
+        lightning.LightningModule,
+        lightning.LightningDataModule,
+        subclass_mode_model=True,
+        subclass_mode_data=True,
+        auto_configure_optimizers=False,
+    )
 
 
 if __name__ == "__main__":
