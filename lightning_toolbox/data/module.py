@@ -16,7 +16,7 @@ import typing as th
 from torch.utils.data import Dataset, DataLoader, random_split
 import lightning
 import dypy as dy
-from .transforms import transform_dataset, TransformsDescriptor, PairedDataTransform
+from .transforms import transform_dataset, TransformsDescriptor, initialize_transforms
 
 
 class DataModule(lightning.LightningDataModule):
