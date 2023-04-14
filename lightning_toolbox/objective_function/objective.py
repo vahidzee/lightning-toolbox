@@ -1,4 +1,4 @@
-# Copyright Vahid Zehtab (vahid@zehtab.me) 2021
+# Copyright Vahid Zehtab (vahid@zehtab.me) 2022-2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -73,12 +73,20 @@ class Objective:
         self.inputs_latch, self.latch, self.results_latch, self.factors_latch = {}, {}, {}, {}
 
     @property
+    def inputs(self) -> th.Dict[th.Any, th.Any]:
+        return self.inputs_latch
+
+    @property
     def results(self) -> ResultsDict:
         return self.results_latch
 
     @property
     def factors(self) -> FactorsDict:
         return self.factors_latch
+
+    @property
+    def latches(self) -> th.Dict[str, th.Dict[th.Any, th.Any]]:
+        return {"inputs": self.inputs, "latch": self.latch, "results": self.results, "factors": self.factors}
 
     def remember(self, **kwargs) -> None:
         """Keep some values for later use. Get's cleared after each call to __call__"""
@@ -87,6 +95,7 @@ class Objective:
     def _forget(self) -> None:
         """Forget all remembered values and clear all latches."""
         self.latch.clear()
+        self.inputs_latch.clear()
         self.results_latch.clear()
         self.factors_latch.clear()
 
