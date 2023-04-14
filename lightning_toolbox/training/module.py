@@ -207,7 +207,9 @@ class TrainingModule(lightning.LightningModule):
             self.log_step_results(results, factors, name)
         if return_results:
             return (results, factors) if return_factors else results
-        return results["loss"] if not is_val else None
+        if not is_val:
+            loss = results["loss"]
+            return loss.mean() if isinstance(loss, torch.Tensor) else loss
 
     def configure_optimizers(self):
         """Initialize the optimizers and learning rate schedulers."""
