@@ -1,4 +1,4 @@
-# Copyright Vahid Zehtab (vahid@zehtab.me) 2021
+# Copyright Vahid Zehtab (vahid@zehtab.me) 2022-2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ with open("README.md", encoding="utf-8") as f:
 setup(
     name="lightning_toolbox",
     packages=find_packages(include=["lightning_toolbox", "lightning_toolbox.*"]),
-    version="0.0.19",
+    version="0.0.20",
     license="MIT",
     description="A collection of utilities for PyTorch Lightning.",
     long_description=long_description,
@@ -29,7 +29,7 @@ setup(
     author_email="vahid@zehtab.me",
     url="https://github.com/vahidzee/lightning-toolbox",
     keywords=["artificial intelligence", "pytorch lightning", "objective functions", "regularization"],
-    install_requires=["torch>=1.9", "lightning>=1.9.0", "dypy"],
+    install_requires=["torch>=1.9", "lightning>=1.9.0", "dypy", "torchvision"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",

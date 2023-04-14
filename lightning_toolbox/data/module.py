@@ -1,4 +1,4 @@
-# Copyright Vahid Zehtab (vahid@zehtab.me) 2021
+# Copyright Vahid Zehtab (vahid@zehtab.me) 2022-2023
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ import typing as th
 from torch.utils.data import Dataset, DataLoader, random_split
 import lightning
 import dypy as dy
+from .transforms import transform_dataset, TransformsDescriptor, PairedDataTransform
 
 
 class DataModule(lightning.LightningDataModule):
@@ -31,6 +32,11 @@ class DataModule(lightning.LightningDataModule):
         val_dataset_args: th.Optional[dict] = None,
         test_dataset: th.Optional[th.Union[str, Dataset]] = None,
         test_dataset_args: th.Optional[dict] = None,
+        # transforms
+        transforms: th.Optional[TransformsDescriptor] = None,
+        train_transforms: th.Optional[TransformsDescriptor] = None,
+        val_transforms: th.Optional[TransformsDescriptor] = None,
+        test_transforms: th.Optional[TransformsDescriptor] = None,
         # batch_size
         batch_size: th.Optional[int] = 16,
         train_batch_size: th.Optional[int] = None,
@@ -93,6 +99,18 @@ class DataModule(lightning.LightningDataModule):
             **(test_dataset_args or dict()),
         }
 
+        # transforms
+        transforms = initialize_transforms(transforms, force_list=True)
+        self.train_transforms = (
+            initialize_transforms(train_transforms, force_list=True) if train_transforms is not None else transforms
+        )
+        self.val_transforms = (
+            initialize_transforms(val_transforms, force_list=True) if val_transforms is not None else transforms
+        )
+        self.test_transforms = (
+            initialize_transforms(test_transforms, force_list=True) if test_transforms is not None else transforms
+        )
+
         # batch_size
         self.train_batch_size = train_batch_size if train_batch_size is not None else batch_size
         self.val_batch_size = val_batch_size if val_batch_size is not None else batch_size
@@ -126,16 +144,21 @@ class DataModule(lightning.LightningDataModule):
         else:
             return DataModule.get_dataset(dy.get_value(dataset, strict=True), **params)
 
-    def setup(self, stage: th.Optional[str] = None) -> None:
+    def setup(self, stage: th.Optional[str] = None, transform: bool = True) -> None:
         if stage == "fit" or stage == "tune":
             self.split_dataset()
+            if transform:
+                self.train_data = transform_dataset(self.train_data, self.train_transforms)
+                self.val_data = transform_dataset(self.val_data, self.val_transforms)
 
-        elif stage == "test" and self.test_batch_size:
+        elif stage == "test" and self.test_batch_size and self.test_data is not None:
             test_data = self.get_dataset(
                 self.test_dataset,
                 **self.test_dataset_args,
             )
             self.test_data = test_data
+            if transform:
+                self.test_data = transform_dataset(self.test_data, self.test_transforms)
 
     def split_dataset(self):
         self.train_data = self.train_data or self.dataset  # in case the train_data is not provided
