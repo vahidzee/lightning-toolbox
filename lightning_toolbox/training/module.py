@@ -40,7 +40,7 @@ class TrainingModule(lightning.LightningModule):
         optimizer_is_active: th.Optional[th.Union[dy.FunctionDescriptor, th.List[dy.FunctionDescriptor]]] = None,
         # optimizer parameters (self.<*>)
         optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,
-        optimizer_args: th.Optional[dict] = None,
+        optimizer_args: th.Union[dict, th.List[th.Optional[dict]], None] = None,
         # learning rate
         lr: th.Union[th.List[float], float] = 1e-4,
         # schedulers
