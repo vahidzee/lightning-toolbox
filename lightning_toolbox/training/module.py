@@ -21,6 +21,8 @@ from lightning_toolbox.objective_function import Objective
 import torch
 from .datastructures import ArgsListDict
 
+DICT_TYPE = th.Union[dict, th.Any]
+
 
 class TrainingModule(lightning.LightningModule):
     def __init__(
@@ -28,11 +30,11 @@ class TrainingModule(lightning.LightningModule):
         # model
         model: th.Optional[torch.nn.Module] = None,  # model instance
         model_cls: th.Optional[str] = None,
-        model_args: th.Optional[dict] = None,
+        model_args: th.Optional[DICT_TYPE] = None,
         # objective
         objective: th.Optional[Objective] = None,  # objective instance
         objective_cls: th.Union[type, str] = "lightning_toolbox.Objective",
-        objective_args: th.Optional[dict] = None,
+        objective_args: th.Optional[DICT_TYPE] = None,
         # optimization configs
         # optimizer name or class
         optimizer: th.Union[str, type, th.List[th.Union[str, type]], None] = None,
@@ -40,7 +42,7 @@ class TrainingModule(lightning.LightningModule):
         optimizer_is_active: th.Optional[th.Union[dy.FunctionDescriptor, th.List[dy.FunctionDescriptor]]] = None,
         # optimizer parameters (self.<*>)
         optimizer_parameters: th.Optional[th.Union[th.List[str], str]] = None,
-        optimizer_args: th.Union[dict, th.List[th.Optional[dict]], None] = None,
+        optimizer_args: th.Union[DICT_TYPE, th.List[th.Optional[DICT_TYPE]], None] = None,
         # learning rate
         lr: th.Union[th.List[float], float] = 1e-4,
         # schedulers
@@ -49,7 +51,7 @@ class TrainingModule(lightning.LightningModule):
         scheduler_name: th.Optional[th.Union[str, th.List[str]]] = None,
         # optimizer index
         scheduler_optimizer: th.Optional[th.Union[int, th.List[int]]] = None,
-        scheduler_args: th.Optional[th.Union[dict, th.List[dict]]] = None,
+        scheduler_args: th.Optional[th.Union[DICT_TYPE, th.List[DICT_TYPE]]] = None,
         scheduler_interval: th.Union[str, th.List[str]] = "epoch",
         scheduler_frequency: th.Union[int, th.List[int]] = 1,
         scheduler_monitor: th.Optional[th.Union[str, th.List[str]]] = None,
