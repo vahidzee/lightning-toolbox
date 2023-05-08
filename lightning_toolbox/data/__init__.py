@@ -12,4 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from .module import DataModule
-from .transforms import transform_dataset, TransformsDescriptor, PairedDataTransform
+from .transforms import transform_dataset, TransformsDescriptor, TupleDataTransform

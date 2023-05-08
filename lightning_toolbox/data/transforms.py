@@ -153,10 +153,10 @@ def transform_dataset(
     return WrapDataset(dataset)
 
 
-class PairedDataTransform:
+class TupleDataTransform:
     """
-    Utility class to wrap a pair dataset (any dataset that returns a tuple of (input, target)) with
-    a list of transforms for input and target separately.
+    Utility class to wrap a tuple dataset (any dataset that returns a tuple e.g. (input, target)) with
+    a list of transforms for each element of the tuple.
 
     This class specially useful for dealing with datasets from torchvision, and coupling them with
     torchvision.transforms.
@@ -164,37 +164,30 @@ class PairedDataTransform:
     Example:
         >>> from torchvision.datasets import MNIST
         >>> from torchvision import transforms
-        >>> from lightning_toolbox.data import VisionTransform
+        >>> from lightning_toolbox.data import TupleDataTransform
         >>> dataset = MNIST(root=".", download=True, transform=None, target_transform=None)
-        >>> transform = PairedTransform(input_transforms=transforms.ToTensor(), target_transforms=transforms.ToTensor())
-        >>> transform_dataset(dataset, transform)
+        >>> transform = TupleDataTransform(transforms.ToTensor(), transforms.ToTensor())
+        >>> transform(dataset, transform)
 
     Attributes:
-        input_transforms: Either None or a torchvision.transforms.Compose object that contains a list of transforms
-            to apply to the input.
-        target_transforms: Either None or a torchvision.transforms.Compose object that contains a list of transforms
-            to apply to the target.
+        transforms: A list of either Nones or transformations to be applied to associated elements of the tuple.
     """
 
     def __init__(
         self,
-        input_transforms: th.Optional[TransformsDescriptor] = None,
-        target_transforms: th.Optional[TransformsDescriptor] = None,
+        transforms: th.Union[
+            th.List[th.Optional[TransformDescriptor]], th.Dict[int, th.Optional[TransformDescriptor]]
+        ],
     ):
         """
         Initialize the transform.
 
         Args:
-            input_transforms: a (list of) transform(s) to apply to the input
-            target_transforms: a (list of) transform(s) to apply to the target
+            transforms: A list of either Nones or transformations to be applied to associated elements of the tuple.
         """
-        input_transforms = (
-            initialize_transforms(input_transforms, force_list=True) if input_transforms is not None else None
-        )
-        target_transforms = (
-            initialize_transforms(target_transforms, force_list=True) if target_transforms is not None else None
-        )
-        self.input_transforms, self.target_transforms = input_transforms, target_transforms
+        if isinstance(transforms, dict):
+            transforms = [transforms.get(i, None) for i in range(len(transforms))]
+        self.transforms = [initialize_transforms(t, force_list=True) if t is not None else None for t in transforms]
 
     def __call__(self, datam) -> th.Tuple[th.Any, th.Any]:
         """
@@ -206,9 +199,8 @@ class PairedDataTransform:
         Returns:
             a tuple of (input, target)
         """
-        x, y = datam
-        for transform in self.input_transforms or []:
-            x = transform(x)
-        for transform in self.target_transforms or []:
-            y = transform(y)
-        return x, y
+        results = list(datam)
+        for i, transforms in enumerate(self.transforms):
+            for transform in transforms or []:
+                results[i] = transform(results[i])
+        return tuple(results)

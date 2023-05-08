@@ -165,17 +165,16 @@ The following are possible ways of specifying a transformation object:
 #### Utility transformations
 It might be the case that you want to apply the same kind of transformations to a part of your data (like when dealing with (input, output) pairs). `lightning_toolbox` provides utility transformations that can be used to handle such cases. These transformations are:
 
-* `lightning_toolbox.data.transforms.PairedDataTransform`: 
-    This transformation class takes on two sets of transformations, one for the input and one for the target. Everything is similar to the way you would specify transformations for the datamodule, except that you have to specify the transformations for the input and output separately. The input transformations are applied to the first element of the tuple, and the target transformations are applied to the second element of the tuple. For instance, the following is a valid way of specifying a `PairedDataTransform` for a vision task for predicting the parity of the input digit image:
+* `lightning_toolbox.data.transforms.TupleDataTransform`: 
+    This transformation class takes on sets of transformations, for each element in the tuple data. Everything is similar to the way you would specify transformations for the datamodule, except that you have to specify the transformations for elements seperately.  For instance, the following is a valid way of specifying a `TupleDataTransform` for a vision task for predicting the parity of the input digit image:
     ```python
     from lightning_toolbox import DataModule
-    from lightning_toolbox.data.transforms import PairedDataTransform
+    from lightning_toolbox.data.transforms import TupleDataTransform
 
     DataModule(
         dataset='torchvision.datasets.MNIST',
-        transforms=PairedDataTransform(
-            input_transforms='torchvision.transforms.ToTensor()',
-            target_transforms='lambda x: x % 2'
+        transforms=TupleDataTransform(
+            transforms=['torchvision.transforms.ToTensor()', 'lambda x: x % 2']
         )
     )
 
@@ -183,11 +182,11 @@ It might be the case that you want to apply the same kind of transformations to 
     DataModule(
         dataset='torchvision.datasets.MNIST',
         transforms=dict(
-            class_path='lightning_toolbox.data.transforms.PairedDataTransform',
-            init_args=dict(
-                input_transforms='torchvision.transforms.ToTensor()',
-                target_transforms='lambda x: x % 2'
-            )
+            class_path='lightning_toolbox.data.transforms.TupleDataTransform',
+            init_args={
+                0:'torchvision.transforms.ToTensor()',
+                1:'lambda x: x % 2'
+            }
         )
     )
     ```
