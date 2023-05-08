@@ -222,10 +222,10 @@ class ObjectiveTerm:
 
     @staticmethod
     def from_description(
-        description: th.Union["ObjectiveTerm", "TermDescriptor"],
+        description: th.Union["ObjectiveTerm", "TermDescriptor"],  # type: ignore
         # overwrite attributes of the instance
         name: th.Optional[str] = None,
-        objective: th.Optional["Objective"] = None,
+        objective: th.Optional["Objective"] = None,  # type: ignore
     ) -> "ObjectiveTerm":
         """
         Creates a `ObjectiveTerm` instance from a `TermDescriptor` object.
