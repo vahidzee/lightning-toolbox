@@ -226,6 +226,7 @@ class ObjectiveTerm:
         # overwrite attributes of the instance
         name: th.Optional[str] = None,
         objective: th.Optional["Objective"] = None,  # type: ignore
+        base_class: th.Optional["ObjectiveTerm"] = None,
     ) -> "ObjectiveTerm":
         """
         Creates a `ObjectiveTerm` instance from a `TermDescriptor` object.
@@ -240,18 +241,25 @@ class ObjectiveTerm:
         if isinstance(description, ObjectiveTerm):
             term = description
         elif isinstance(description, str):
-            term = ObjectiveTerm.from_description(dy.eval(description, dynamic_args=True, strict=False))
+            temp = dy.eval(description, strict=False)
+            term = ObjectiveTerm.from_description(
+                dy.dynamic_args_wrapper(temp) if not isinstance(temp, type) else temp, base_class=base_class
+            )
         elif isinstance(description, type) and issubclass(description, ObjectiveTerm):
             term = description()
         elif callable(description):
-            term = ObjectiveTerm(term_function=description)
-        # else the description is a dict
+            base_class = base_class if base_class is not None else ObjectiveTerm
+            term = base_class(term_function=description)
+        # else the description is a dict (or None)
         # checking if the description provides a class_path to instantiate a previously defined term
         elif "class_path" in description:
-            term = dy.eval(description["class_path"])(**description.get("init_args", dict()))
+            base_class = dy.eval(description["class_path"])
+            init_args = description.get("init_args", {})
+            term = ObjectiveTerm.from_description(description=init_args, base_class=base_class)
         # else the description is a dict with required fields to instantiate a new term
         else:
-            term = ObjectiveTerm(**description)
+            base_class = base_class if base_class is not None else ObjectiveTerm
+            term = base_class(**description)
         if name is not None:
             term.name = str(name)
         if objective is not None:
