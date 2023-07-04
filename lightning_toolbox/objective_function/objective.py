@@ -55,7 +55,40 @@ class Objective:
             __call__. The factors are computed by the terms themselves, and just stored here for convenience.
     """
 
-    latch: th.Dict[th.Any, th.Any]
+    def __init_subclass__(cls) -> None:
+        """Find the predefined terms and store them in the class."""
+        # go through the class attributes and find predefined terms
+        terms = dict()  # ordered by default (python 3.7+)
+        # pre defined terms are found from cls_annotations, which is guaranteed to be
+        # ordered.
+
+        # the syntax for the predefined terms is:
+        #   term_name: BaseTermClass [= term_descriptor]
+        # where term_descriptor is either a number, a dict, a function descriptor
+
+        cls_annotations = cls.__dict__.get("__annotations__", {})
+        for name, annotation in cls_annotations.items():
+            if not issubclass(annotation, ObjectiveTerm):
+                continue
+            terms[name] = dict(class_path=annotation)
+
+            # looking at the descriptor provided for the predefined term
+            # its either a bool, a dict, a number, or a function/term descriptor
+            desc = cls.__dict__.get(name, {})
+            args = dict(active=True if not isinstance(desc, dict) else desc.get("active", True))
+
+            if isinstance(desc, (int, float)):
+                # if the descriptor is a number, use it as the factor value
+                args["factor"] = desc
+
+            elif isinstance(desc, dict):
+                args = {**args, **desc}  # merge to keep the active flag
+            else:
+                # the only other supported descriptor is a function as the term function
+                args["term_function"] = desc
+
+            terms[name]["init_args"] = args
+        setattr(cls, "__predefined_terms", terms)
 
     def __init__(
         self,
@@ -63,10 +96,35 @@ class Objective:
         **term_kwargs: TermDescriptor,
     ) -> None:
         term_args = [ObjectiveTerm.from_description(term, objective=self) for term in term_args]
+        predefined_terms = []
+        for name, desc in getattr(self, "__predefined_terms", {}).items():
+            # updating description
+            update_desc = term_kwargs.pop(name, {})  # remove the term from the kwargs
+            is_active = desc["init_args"].pop("active", True)
+
+            # turn off the term if the updated description is False (or 0, or None, or "") or the term is off by default
+            if (isinstance(update_desc, bool) and not update_desc) or (not is_active and not update_desc):
+                continue
+
+            # if the updated description is a number use it as the factor value
+            if isinstance(update_desc, (int, float)) and not isinstance(update_desc, bool):
+                desc["init_args"]["factor"] = update_desc
+            # if the updated description is a function descriptor, use it as the term function
+            elif isinstance(update_desc, str) or callable(update_desc):
+                desc["init_args"]["term_function"] = update_desc
+            # the updated description is a dict, either with a a new class path or just new init args
+            elif isinstance(update_desc, dict) and "class_path" in update_desc:
+                desc["class_path"] = update_desc["class_path"]
+                desc["init_args"] = {**desc["init_args"], **update_desc.get("init_args", {})}
+            elif isinstance(update_desc, dict):  # check to skip the case where update_desc is a bool
+                desc["init_args"] = {**desc["init_args"], **update_desc}
+
+            predefined_terms.append(ObjectiveTerm.from_description(desc, objective=self, name=name))
+
         term_kwargs = [
             ObjectiveTerm.from_description(term, objective=self, name=name) for name, term in term_kwargs.items()
         ]
-        self.terms: th.List[ObjectiveTerm] = term_args + term_kwargs
+        self.terms: th.List[ObjectiveTerm] = predefined_terms + term_args + term_kwargs
         # to make sure all terms have unique names
         self.__rename_terms(terms=self.terms)
         # initialize the latches
