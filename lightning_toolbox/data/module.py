@@ -151,6 +151,9 @@ class DataModule(lightning.LightningDataModule):
                 self.train_data = transform_dataset(self.train_data, self.train_transforms)
                 self.val_data = transform_dataset(self.val_data, self.val_transforms)
 
+            if self.val_data is None:
+                self.val_dataloader = None
+
         elif stage == "test" and self.test_batch_size and self.test_data is not None:
             test_data = self.get_dataset(
                 self.test_dataset,
