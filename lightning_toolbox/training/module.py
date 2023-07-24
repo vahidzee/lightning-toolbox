@@ -33,7 +33,7 @@ class TrainingModule(lightning.LightningModule):
         model_args: th.Optional[DICT_TYPE] = None,
         # objective
         objective: th.Optional[Objective] = None,  # objective instance
-        objective_cls: th.Union[type, str] = "lightning_toolbox.Objective",
+        objective_cls: str = "lightning_toolbox.Objective",  # v0.0.29: remove type annotation to avoid CLI auto-discovery
         objective_args: th.Optional[DICT_TYPE] = None,
         # optimization configs
         # optimizer name or class

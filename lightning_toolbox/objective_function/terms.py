@@ -18,6 +18,10 @@ import typing as th
 
 
 class ObjectiveTerm:
+    def __init_subclass__(cls) -> None:
+        """Wrap the __call__ method of the subclass with a dynamic_args_wrapper."""
+        cls.__call__ = dy.dynamic_args_wrapper(cls.__call__)
+
     def __init__(
         self,
         name: th.Optional[str] = None,
