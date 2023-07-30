@@ -11,8 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from .training import TrainingModule
-from .utils import freeze_params, unfreeze_params
-from .objective_function import Objective, ObjectiveTerm
-from .data import DataModule
-from .sweep import Sweep
+from .main import Sweep
+from .parameters import ParametersMapping
