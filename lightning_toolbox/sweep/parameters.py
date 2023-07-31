@@ -20,7 +20,7 @@ import copy
 import logging
 
 
-WANDB_SWEEP_KEYS = ("values", "value", "distribution", "probabilities")
+WANDB_SWEEP_KEYS = ("values", "value", "distribution", "probabilities", "value")
 VALUES_ALIAS = "values_alias"
 
 
