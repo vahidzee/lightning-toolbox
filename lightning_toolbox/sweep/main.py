@@ -95,10 +95,10 @@ class Sweep:
         return self.parameters_mapping.remap(parameters, base=self.base_config)
 
     def initialize(self):
-        # create the sweep
-        sweep_id = wandb.sweep(sweep=self.sweep_config, entity=self.entity, project=self.project)
-        self.sweep_id = sweep_id
-        return sweep_id
+        if self.sweep_id is None:
+            sweep_id = wandb.sweep(sweep=self.sweep_config, entity=self.entity, project=self.project)
+            self.sweep_id = sweep_id
+        return self.sweep_id
 
     def run(self, function: Callable, count: Optional[int] = None):
         return wandb.agent(
