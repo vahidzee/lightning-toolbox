@@ -59,6 +59,7 @@ class TrainingModule(lightning.LightningModule):
         # initialization settings
         save_hparams: bool = True,
         initialize_superclass: bool = True,
+        pretrained_state: th.Optional[str] = None,
     ) -> None:
         if initialize_superclass:
             super().__init__()
@@ -126,6 +127,12 @@ class TrainingModule(lightning.LightningModule):
         # initialize the model
         if model is not None or model_args is not None or model_cls is not None:
             self.model = model if model is not None else dy.eval(model_cls)(**(model_args or dict()))
+
+        # load pretrained checkpoint
+        # TODO: add smart loading of state dict, e.g. if the checkpoint has different structure,
+        # load only the common parts and ignore the rest
+        if pretrained_state is not None:
+            self.load_state_dict(torch.load(pretrained_state)["state_dict"])
 
     @functools.cached_property
     def __optimizers_is_active_list(self):
