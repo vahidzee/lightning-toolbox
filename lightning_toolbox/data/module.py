@@ -56,6 +56,11 @@ class DataModule(lightning.LightningDataModule):
         train_num_workers: th.Optional[int] = None,
         val_num_workers: th.Optional[int] = None,
         test_num_workers: th.Optional[int] = None,
+        # generic dataloader params
+        dataloader_args: th.Optional[dict] = None,
+        train_dataloader_args: th.Optional[dict] = None,
+        val_dataloader_args: th.Optional[dict] = None,
+        test_dataloader_args: th.Optional[dict] = None,
         # seed
         seed: int = 0,
         # initialization settings
@@ -132,6 +137,12 @@ class DataModule(lightning.LightningDataModule):
         self.val_num_workers = val_num_workers if val_num_workers is not None else num_workers
         self.test_num_workers = test_num_workers if test_num_workers is not None else num_workers
 
+        # generic dataloader params
+        base_dataloader_args = dataloader_args or dict()
+        self.train_dataloader_args = {**base_dataloader_args, **(train_dataloader_args or dict())}
+        self.val_dataloader_args = {**base_dataloader_args, **(val_dataloader_args or dict())}
+        self.test_dataloader_args = {**base_dataloader_args, **(test_dataloader_args or dict())}
+
     @staticmethod
     def get_dataset(dataset: th.Union[str, Dataset], **params):
         assert isinstance(
@@ -199,6 +210,11 @@ class DataModule(lightning.LightningDataModule):
         shuffle = shuffle if shuffle is not None else getattr(self, f"{name}_shuffle")
         num_workers = num_workers if num_workers is not None else getattr(self, f"{name}_num_workers")
         pin_memory = pin_memory if pin_memory is not None else getattr(self, f"{name}_pin_memory")
+        params = {**getattr(self, f"{name}_dataloader_args"), **params}
+
+        # set fractional batches if batch_size is negative
+        batch_size = (len(data) // abs(batch_size)) if batch_size < 0 else batch_size
+
         return DataLoader(
             dataset=data,
             batch_size=batch_size,
