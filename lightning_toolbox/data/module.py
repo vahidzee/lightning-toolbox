@@ -38,7 +38,7 @@ class DataModule(lightning.LightningDataModule):
         val_transforms: th.Optional[TransformsDescriptor] = None,
         test_transforms: th.Optional[TransformsDescriptor] = None,
         # batch_size
-        batch_size: th.Optional[int] = 16,
+        batch_size: th.Optional[int] = None,
         train_batch_size: th.Optional[int] = None,
         val_batch_size: th.Optional[int] = None,
         test_batch_size: th.Optional[int] = None,
@@ -48,9 +48,9 @@ class DataModule(lightning.LightningDataModule):
         val_pin_memory: th.Optional[bool] = None,
         test_pin_memory: th.Optional[bool] = None,
         # shuffle
-        train_shuffle: bool = True,
-        val_shuffle: bool = False,
-        test_shuffle: bool = False,
+        train_shuffle: th.Optional[bool] = None,
+        val_shuffle: th.Optional[bool] = None,
+        test_shuffle: th.Optional[bool] = None,
         # num_workers
         num_workers: int = 0,
         train_num_workers: th.Optional[int] = None,
@@ -120,9 +120,6 @@ class DataModule(lightning.LightningDataModule):
         self.train_batch_size = train_batch_size if train_batch_size is not None else batch_size
         self.val_batch_size = val_batch_size if val_batch_size is not None else batch_size
         self.test_batch_size = test_batch_size if test_batch_size is not None else batch_size
-        assert (
-            self.train_batch_size or self.val_batch_size or self.test_batch_size
-        ), "at least one of batch_sizes should be a positive number"
 
         # pin memory
         self.train_pin_memory = train_pin_memory if train_pin_memory is not None else pin_memory
@@ -213,7 +210,7 @@ class DataModule(lightning.LightningDataModule):
         params = {**getattr(self, f"{name}_dataloader_args"), **params}
 
         # set fractional batches if batch_size is negative
-        batch_size = (len(data) // abs(batch_size)) if batch_size < 0 else batch_size
+        batch_size = (len(data) // abs(batch_size)) if batch_size is not None and batch_size < 0 else batch_size
 
         return DataLoader(
             dataset=data,
