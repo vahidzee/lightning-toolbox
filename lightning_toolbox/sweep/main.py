@@ -119,6 +119,8 @@ class Sweep:
             sub_configs=True,
         )
         parser.add_argument("--config", action=ActionConfigFile)
+        parser.add_argument("--submit-only", action="store_true", default=False)
+
         # parse the arguments
         args = parser.parse_args()
         sweep = dypy.functions.call_with_dynamic_args(Sweep, **args)

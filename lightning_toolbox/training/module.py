@@ -204,7 +204,7 @@ class TrainingModule(lightning.LightningModule):
             return None  # this will skip this step, but the optimizer position will be incremented
             # TODO: check if how this affects the schedulers
 
-        results, factors = self.objective(
+        _return_val = self.objective(
             batch=batch,
             optimizer_idx=optimizer_idx,
             batch_idx=batch_idx,
@@ -212,6 +212,7 @@ class TrainingModule(lightning.LightningModule):
             return_factors=True,
             **kwargs,
         )
+        results, factors = _return_val if isinstance(_return_val, tuple) else (_return_val, None)
         if log_results:
             self.log_step_results(results, factors, name)
         if return_results:
@@ -312,8 +313,8 @@ class TrainingModule(lightning.LightningModule):
                 sync_dist=True,
             )
 
-    def training_step(self, batch, batch_idx, optimizer_idx=None, **kwargs):
-        return self.step(batch, batch_idx, optimizer_idx, name="train", **kwargs)
+    def training_step(self, batch, batch_idx, **kwargs):
+        return self.step(batch, batch_idx, name="train", **kwargs)
 
     def validation_step(self, batch, batch_idx, **kwargs):
         return self.step(batch, batch_idx, name="val", **kwargs)
